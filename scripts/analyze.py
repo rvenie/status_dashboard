@@ -46,6 +46,13 @@ AGENCIES = {
  'Генштаб':r'Генштаб(?:а|у|ом|е)?|Генеральн[а-яё]+ штаб(?:а|у|ом|е)?',
 }
 AGENCIES = {k:re.compile(r'(?<![\w-])(?:'+v+r')(?![\w-])',re.I) for k,v in AGENCIES.items()}
+GRAPH_PUBLIC_BODIES = {
+    **AGENCIES,
+    'Президент РФ':re.compile(r'\bпрезидент(?:а|у|ом|е)?\s+(?:российской\s+федерации|росси[ия]|рф)\b',re.I),
+    'Правительство РФ':re.compile(r'\bправительств[а-яё]+\s+(?:российской\s+федерации|росси[ия]|рф|мишустина)\b',re.I),
+}
+PRESIDENTIAL_OFFICE = re.compile(r'\bадминистраци[а-яё]+\s+президент(?:а|у|ом|е)?\s+(?:российской\s+федерации|росси[ия]|рф)\b',re.I)
+
 KNOWN = {
  'Владимир Путин':r'Путин(?:а|у|ом|ым|е)?',
  'Михаил Мишустин':r'Мишустин(?:а|у|ым|е)?',
@@ -264,6 +271,69 @@ def score(text, key):
             + 1.05*min(repetition,6) + 1.5*bool(DATE_RU.search(text) or DATE_NUM.search(text))
             - 2.3*bool(BAD_START.search(text)) - 2.9*bool(NONFACT.search(text)) - max(0,n-260)/220)
 
+
+PARTY_NAMES = {
+    'Единая Россия': r'един(?:ая|ой|ую)\s+росси(?:я|и|ю|ей)|единоросс[а-яё]*',
+    'КПРФ': r'КПРФ|коммунистическ[а-яё]+\s+парти[а-яё]+\s+(?:российской\s+федерации|рф)',
+    'ЛДПР': r'ЛДПР|либерально[-–]демократическ[а-яё]+\s+парти[а-яё]+\s+россии|лдпровц[а-яё]*',
+    'Справедливая Россия': r'справедлив(?:ая|ой|ую)\s+росси(?:я|и|ю|ей)(?:\s+[—–-]\s*патриоты\s*[—–-]?)?(?:\s*(?:[—–-]\s*)?за\s+правду)?|СРЗП',
+    'Новые люди': r'[«„“"]\s*нов(?:ые|ых|ым|ыми)\s+люд(?:и|ей|ям|ьми)\s*[»“”"]|(?:парти[а-яё]+|фракци[а-яё]+)\s+нов(?:ые|ых|ым|ыми)\s+люд(?:и|ей|ям|ьми)',
+    'Яблоко': r'[«„“"]\s*яблок(?:о|а|у|ом|е)\s*[»“”"]|(?:парти[а-яё]+|фракци[а-яё]+)\s+яблок(?:о|а|у|ом|е)|яблочник[а-яё]*',
+    'Партия роста': r'парти[яиюе]\s+роста|партией\s+роста',
+    'Партия пенсионеров': r'(?:российск[а-яё]+\s+)?парти[а-яё]+\s+пенсионеров(?:\s+за\s+социальную\s+справедливость)?|РППСС',
+    'Коммунисты России': r'коммунист(?:ы|ов|ам|ами|ах)\s+россии',
+    'Гражданская инициатива': r'гражданск(?:ая|ой|ую)\s+инициатив(?:а|ы|у|е|ой)',
+    'Гражданская платформа': r'гражданск(?:ая|ой|ую)\s+платформ(?:а|ы|у|е|ой)',
+    'Родина': r'(?:парти[а-яё]+|фракци[а-яё]+)\s+[«„“"]?родин(?:а|ы|у|е|ой)|[«„“"]родин(?:а|ы|у|е|ой)[»“”"](?=\s+(?:—\s*)?(?:парти|фракци))',
+    'Зелёные': r'российск[а-яё]+\s+экологическ[а-яё]+\s+парти[а-яё]+\s+[«„“"]?\s*зел[её]н(?:ые|ых)[»“”"]?|парти[а-яё]+\s+[«„“"]\s*зел[её]н(?:ые|ых)\s*[»“”"]',
+    'Зелёная альтернатива': r'зел[её]н(?:ая|ой|ую)\s+альтернатив(?:а|ы|у|е|ой)',
+    'ПАРНАС': r'(?-i:ПАРНАС)|парти[а-яё]+\s+народной\s+свободы',
+    'Российская партия свободы и справедливости': r'российск[а-яё]+\s+парти[а-яё]+\s+свободы\s+и\s+справедливости|РПСС',
+    'Партия дела': r'(?-i:Парти[яиюе]\s+дела|[Пп]арти[яиюе]\s+[«„“"]Дела[»“”"])',
+    'Партия прямой демократии': r'парти[а-яё]+\s+прямой\s+демократии',
+    'Партия За правду': r'парти[а-яё]+\s+[«„“"]за\s+правду[»“”"]',
+}
+# Require party context for names that can also be ordinary phrases.
+for party in ('Гражданская инициатива','Гражданская платформа','Зелёная альтернатива'):
+    alias=PARTY_NAMES[party]
+    PARTY_NAMES[party]=rf'(?:[«„“"]\s*(?:{alias})\s*[»“”"]|(?:парти[а-яё]+|фракци[а-яё]+)\s+(?:{alias}))'
+PARTY_NAMES['Единая Россия']+=r'|[«„“"](?-i:ЕР)[»“”"]|(?:парти[а-яё]+|фракци[а-яё]+)\s+(?-i:ЕР)'
+CORPORATION_NAMES = {
+    'Ростех': r'ростех(?:а|у|ом|е)?|ростехнологи(?:и|й|ям|ями|ях)|rostec(?:h)?',
+    'Росатом': r'росатом(?:а|у|ом|е)?|rosatom',
+    'Роскосмос': r'роскосмос(?:а|у|ом|е)?|roscosmos',
+    'ВЭБ.РФ': r'вэб(?:[.\s]+рф\b|(?:а|у|ом|е)?\b)|внешэкономбанк(?:а|у|ом|е)?|veb\.rf',
+    'Агентство по страхованию вкладов': r'агентств[а-яё]+\s+по\s+страхованию\s+вкладов|(?-i:АСВ)',
+    'Фонд содействия реформированию ЖКХ': r'фонд(?:а|у|ом|е)?\s+содействия\s+реформированию\s+(?:жкх|жилищно[-–]коммунального\s+хозяйства)|фонд(?:а|у|ом|е)?\s+жкх',
+}
+
+def compile_names(names):
+    return {name:re.compile(r'(?<![\w-])(?:'+pattern+r')(?![\w-])',re.I) for name,pattern in names.items()}
+
+PARTY_PATTERNS=compile_names(PARTY_NAMES)
+CORPORATION_PATTERNS=compile_names(CORPORATION_NAMES)
+
+def entity_hits(paragraphs, patterns):
+    found={}
+    for paragraph in paragraphs:
+        text=paragraph['t']
+        for name, pattern in patterns.items():
+            matches=list(pattern.finditer(text))
+            if not matches:
+                continue
+            if name not in found:
+                start=matches[0].start()
+                sentence=next((s.text for s in sentenize(text) if s.start<=start<s.stop),text)
+                if len(sentence)>300:
+                    start_in_sentence=max(0,sentence.casefold().find(matches[0][0].casefold()))
+                    left=max(0,start_in_sentence-90)
+                    right=min(len(sentence),left+280)
+                    sentence=('…' if left else '')+sentence[left:right]+('…' if right<len(sentence) else '')
+                found[name]={'name':name,'count':0,'anchor':paragraph['a'],'text':sentence}
+            found[name]['count']+=len(matches)
+    return sorted(found.values(),key=lambda x:(-x['count'],x['name']))
+
+
 def glean(section, post, index):
     heading=clean(section['h'])
     if STOP_HEAD.search(heading):
@@ -308,6 +378,10 @@ def glean(section, post, index):
                    key=lambda x:x.split()[-1])
     persons=[k for k in persons if k not in ('Владимир Владимирович','Сергей Владиленович')]
     agency=[k for k,rx in AGENCIES.items() if rx.search(evidence)]
+    mention_text=heading+' '+alltext
+    without_office=PRESIDENTIAL_OFFICE.sub(' ',mention_text)
+    mention_agencies=[k for k,rx in GRAPH_PUBLIC_BODIES.items()
+                      if rx.search(without_office if k=='Президент РФ' else mention_text)]
     refs=dates(evidence)
     docs=list(dict.fromkeys([m[1] for m in LEGAL_TITLE.finditer(alltext+' '+heading)]
                             +[clean(m[0]) for m in LEGAL_NUM.finditer(alltext+' '+heading)]))
@@ -346,9 +420,10 @@ def glean(section, post, index):
     return {
        'id':f"{post['slug']}:{index}",'slug':post['slug'],'date':post['date'],'title':heading,
        'anchor':section['a'] or (points[0]['anchor'] if points else None),'tags':tags,
-       'people':persons,'agency':agency,'actors':sorted(explicit), 'dateRefs':refs,
+       'people':persons,'agency':agency,'mentionAgencies':mention_agencies,'actors':sorted(explicit), 'dateRefs':refs,
        'stages':stage,'documents':docs,'links':[{'url':u,'text':t} for u,t in links],'points':points,
-       'words':len(alltext.split()),
+       'words':len(alltext.split()), 'parties':entity_hits(section['p'],PARTY_PATTERNS),
+       'corporations':entity_hits(section['p'],CORPORATION_PATTERNS),
     }
 
 if __name__=='__main__':

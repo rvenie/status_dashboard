@@ -7,6 +7,7 @@
 <title>Политическая хронология · Статус</title>
 <link rel="stylesheet" href="style.css">
 <script defer src="data.js"></script>
+<script defer src="mentions.js"></script>
 <script defer src="app.js"></script>
 </head>
 <body>
@@ -27,13 +28,14 @@
   </section>
   <nav class="tabs" aria-label="Разделы портала">
     <button data-tab="timeline" aria-current="page">Хронология</button>
+    <button data-tab="mentions">Граф упоминаний</button>
     <button data-tab="tree">Люди и ведомства</button>
     <button data-tab="archive">Выпуски</button>
     <button data-tab="method">О данных</button>
   </nav>
   <section id="explorer">
     <form id="filters" class="filters" role="search" aria-label="Фильтры архива">
-      <label class="search"><span>Поиск</span><input type="search" id="query" placeholder="Фамилия, тема или номер закона" autocomplete="off"></label>
+      <label class="search"><span>Поиск</span><input type="search" id="query" placeholder="Фамилия, партия или номер закона" autocomplete="off"></label>
       <label><span>Темы</span><select id="topic"></select></label>
       <label><span>Люди</span><select id="person"></select></label>
       <label><span>Ведомства</span><select id="agency"></select></label>
@@ -75,6 +77,77 @@
         </div>
       </section>
     </div>
+    <section id="mentions" hidden aria-labelledby="mentions-title">
+      <div class="section-head tree-head">
+        <div><h2 id="mentions-title">Граф упоминаний</h2>
+          <p>Линия соединяет людей, ведомства, партии или госкорпорации из одного сюжета. Чем толще линия, тем больше общих сюжетов.</p></div>
+      </div>
+      <div class="mention-controls">
+        <label>Период <select id="mention-year"></select></label>
+        <label>Тип связей <select id="mention-relation">
+          <option value="all">Все связи</option>
+          <option value="mixed">Люди и ведомства</option>
+          <option value="people">Между людьми</option>
+          <option value="agencies">Между ведомствами</option>
+          <option value="parties">С участием партий</option>
+          <option value="corporations">С участием госкорпораций</option>
+        </select></label>
+        <label>Общие сюжеты <select id="mention-threshold">
+          <option value="1">От 1</option><option value="2" selected>От 2</option>
+          <option value="3">От 3</option><option value="5">От 5</option><option value="10">От 10</option>
+        </select></label>
+        <label>Узел <select id="mention-focus"></select></label>
+      </div>
+      <div class="mention-layout">
+        <div class="mention-figure">
+          <div class="mention-bar">
+            <div class="mention-legend" aria-label="Типы узлов">
+              <span class="mention-person">Люди</span>
+              <span class="mention-agency">Ведомства</span>
+              <span class="mention-party">Партии</span>
+              <span class="mention-corporation">Госкорпорации</span>
+            </div>
+            <div class="mention-zoom" aria-label="Масштаб графа">
+              <button type="button" data-mention-zoom="out" aria-label="Уменьшить граф">−</button>
+              <button type="button" data-mention-zoom="reset" aria-label="Исходный масштаб">100%</button>
+              <button type="button" data-mention-zoom="in" aria-label="Увеличить граф">+</button>
+            </div>
+          </div>
+          <p id="mention-empty" class="mention-empty" hidden></p>
+          <svg id="mention-plot" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="Граф совместных упоминаний"></svg>
+          <p id="mention-caption" class="mention-caption" aria-live="polite"></p>
+        </div>
+        <aside id="mention-detail" class="mention-detail" aria-label="Сюжеты и связи" aria-live="polite"></aside>
+      </div>
+      <section class="party-counts" aria-labelledby="party-title">
+        <div class="section-head">
+          <div><h2 id="party-title">Российские партии</h2>
+            <p>Совпадения с названиями и их вариантами в тексте новостных сюжетов. Таблица учитывает период и фильтры архива.</p></div>
+          <label class="sort">Порядок <select id="mention-party-sort">
+            <option value="count">По упоминаниям</option><option value="stories">По сюжетам</option><option value="episodes">По выпускам</option>
+          </select></label>
+        </div>
+        <p id="mention-party-empty" class="empty" hidden>В выбранных сюжетах не найдено названий российских партий из словаря.</p>
+        <table id="mention-parties">
+          <thead><tr><th scope="col">Партия</th><th scope="col">Упоминания</th><th scope="col">Сюжеты</th><th scope="col">Выпуски</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+      <section class="party-counts" aria-labelledby="corporation-title">
+        <div class="section-head">
+          <div><h2 id="corporation-title">Государственные корпорации</h2>
+            <p>Названия организаций с юридическим статусом госкорпорации. Нажмите на название, чтобы открыть связи и темы.</p></div>
+          <label class="sort">Порядок <select id="mention-corporation-sort">
+            <option value="count">По упоминаниям</option><option value="stories">По сюжетам</option><option value="episodes">По выпускам</option>
+          </select></label>
+        </div>
+        <p id="mention-corporation-empty" class="empty" hidden>В выбранных сюжетах не найдено названий государственных корпораций из словаря.</p>
+        <table id="mention-corporations">
+          <thead><tr><th scope="col">Корпорация</th><th scope="col">Упоминания</th><th scope="col">Сюжеты</th><th scope="col">Выпуски</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+    </section>
     <section id="tree" hidden>
       <div class="section-head tree-head">
         <div><h2>Люди и ведомства</h2><p>Раскройте ветку, чтобы увидеть связанные действия или сюжеты</p></div>
@@ -101,6 +174,9 @@
       <dt>Публикации</dt><dd>Сюжеты выделены из новостной части каждого выпуска. Дата берётся со страницы Teletype в часовом поясе Москвы. Если в тексте встречается иная дата, её можно увидеть в карточке как дату из стенограммы.</dd>
       <dt>Даты решений</dt><dd>Сюда вошли отобранные действия, даты и роли которых сверены с карточками Госдумы и текстами актов. Несколько стадий одного закона показываются отдельно. Если итоговый акт появился после эфира, карточка приводит оба источника.</dd>
       <dt>Фамилии и ведомства</dt><dd>В архиве они означают упоминания в заголовке или фрагментах сюжета. В сверенных карточках действия и фигуранты подписаны отдельно. Частота упоминаний отражает повестку программы и зависит от доступных выпусков и разметки.</dd>
+      <dt>Граф упоминаний</dt><dd>Связь показывает число сюжетов, где встречаются оба узла. В каждом сюжете пара учитывается один раз. Выбор периода относится к дате публикации. Люди берутся из разметки сюжетов, ведомства учитываются по названиям и сокращениям в тексте. Например, для узла «Президент РФ» требуется упоминание самой должности.</dd>
+      <dt>Российские партии</dt><dd>Считаются совпадения с названиями, сокращениями и однозначными производными из словаря, например «единороссы» в тексте новостных сюжетов. «Упоминания» учитывают повторения, «Сюжеты» и «Выпуски» считают уникальные записи. Общие слова без партийного контекста пропускаются.</dd>
+      <dt>Госкорпорации</dt><dd>В словарь входят «Ростех», «Росатом», «Роскосмос», ВЭБ.РФ, Агентство по страхованию вкладов и прежний Фонд содействия реформированию ЖКХ. Считаются названия и однозначные варианты в тексте новостных сюжетов. <a href="https://static.government.ru/media/files/Vif1bFy56b9Auymbkr3LN4bw5Nkm4rvv.pdf" target="_blank" rel="noopener">Документ Правительства России ↗</a> · <a href="https://veb.ru/investoram/" target="_blank" rel="noopener">Статус ВЭБ.РФ ↗</a></dd>
       <dt>Документы и стадии</dt><dd>Для обычных сюжетов номера, названия и стадии извлечены из стенограммы. Одна карточка может относиться к нескольким мерам. Сведения о стадии относятся к моменту обсуждения. Ссылки ведут в конкретные разделы стенограмм и к документам, если они указаны.</dd>
       <dt>Саммари выпусков</dt><dd>Краткие формулировки составлены по тексту программы. В каждом выпуске есть указатели на сюжеты и формулировки из источника. Машинная разметка проверена выборочно.</dd>
     </dl>

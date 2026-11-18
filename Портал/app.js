@@ -57,24 +57,29 @@ function active(r, terms, filters) {
 }
 for (const r of records.values()) {
   r.search=normalize([r.title,episodes.get(r.slug)?.subtitle,r.action,(r.points??[]).map(x=>x.text),
-    r.tags,r.people,r.agency,r.stages,r.documents,r.bill].flat(2).join(' '));
+    r.tags,r.people,r.agency,r.mentionAgencies,r.stages,r.documents,r.bill,r.parties?.map(p=>[p.name,p.text]),r.corporations?.map(p=>[p.name,p.text])].flat(2).join(' '));
 }
 for (const e of episodes.values()) {
   e.search=normalize([e.title,e.subtitle,...e.notes.map(x=>x.text??x),e.theses,e.tags].flat(2).join(' '));
 }
-function filtered(list) {
-  const terms=queryTerms(), filters=selectedFilters();
+function filtered(list, agencyField='agency') {
+  const terms=queryTerms();
+  const filters=selectedFilters().map(([key,value])=>[key==='agency'?agencyField:key,value]);
   return list.filter(r=>active(r,terms,filters));
 }
+const mentionExplorer=window.StatusMentions.create({
+  $,yearOptions:years,escape:e,format:fmt,storyCount:n=>quantity(n,false),recordButton,byDate,
+});
 function tab(to) {
   state.tab=to;
   document.querySelectorAll('[data-tab]').forEach(b=>b.dataset.tab===to ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'));
-  for (const current of ['timeline','tree','archive','method']) $(current).hidden=current!==to;
+  for (const current of ['timeline','mentions','tree','archive','method']) $(current).hidden=current!==to;
   $('explorer').hidden=to==='method';
   render();
 }
 function render() {
   if(state.tab==='timeline') drawTimeline();
+  if(state.tab==='mentions') mentionExplorer.render(filtered(D.rows,'mentionAgencies'));
   if(state.tab==='tree') drawTree();
   if(state.tab==='archive') drawArchive();
 }
@@ -166,6 +171,11 @@ function renderDetail(r) {
     if (related.length) body+='<p class="detail-label">Другие стадии этого решения</p><div class="doc-chain">'+
       byDate(related,false).map(x=>'<button class="text-button" type="button" data-record="'+e(x.id)+'">'+textDate(x.date)+' · '+e(x.stages[0])+'</button>').join('')+'</div>';
   } else {
+    for(const [hits,label] of [[r.parties,'Упоминания российских партий'],[r.corporations,'Упоминания госкорпораций']]) {
+      if(hits?.length) body+='<p class="detail-label">'+label+'</p><ul class="point-list">'+hits.map(p=>
+        '<li><strong>'+e(p.name)+' · '+fmt.format(p.count)+'</strong> '+e(p.text)+' '+
+        source(sourceUrl(r,p.anchor??r.anchor),'К абзацу')+'</li>').join('')+'</ul>';
+    }
     if(r.people.length) body+='<p class="detail-label">Фамилии в контексте</p>'+chips(r.people,'person');
     if(r.points?.length) body+='<p class="detail-label">Что сказано в стенограмме</p><ul class="point-list">'+
       r.points.map(x=>'<li>'+e(x.text)+(x.anchor?' '+source(sourceUrl(r,x.anchor),'К абзацу'):'')+'</li>').join('')+'</ul>';
@@ -310,4 +320,5 @@ document.addEventListener('click',ev=>{
 });
 $('tracks').innerHTML=D.tracks.map((t,i)=>'<article class="track"><strong>'+e(t.name)+'</strong><p>'+e(t.text)+
   '</p><button type="button" class="text-button" data-track="'+i+'">Показать на графике</button></article>').join('');
-tab('timeline');
+window.addEventListener('hashchange',()=>{if(location.hash==='#mentions') tab('mentions');});
+tab(location.hash==='#mentions'?'mentions':'timeline');
