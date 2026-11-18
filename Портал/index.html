@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Политическая хронология по стенограммам программы «Статус». Поиск по людям, ведомствам, законам и темам.">
+<title>Политическая хронология · Статус</title>
+<link rel="stylesheet" href="style.css">
+<script defer src="data.js"></script>
+<script defer src="app.js"></script>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap mast-in">
+    <a class="brand" href="#" id="home"><span class="brand-mark">С</span> Статус <span class="brand-slash">/</span> Архив</a>
+    <a class="external" href="https://teletype.in/@eschulmann" target="_blank" rel="noopener">Первоисточник ↗</a>
+  </div>
+</header>
+<main class="wrap">
+  <section class="intro">
+    <div class="intro-main">
+      <p class="date-kicker" id="coverage">Архив программы</p>
+      <h1>Политическая<br class="hero-break"> хронология</h1>
+      <p class="lede">Решения, законопроекты и назначения по стенограммам программы Екатерины Шульман и Максима Курникова.</p>
+    </div>
+    <div class="intro-stats" id="metrics" aria-label="Объём архива"></div>
+  </section>
+  <nav class="tabs" aria-label="Разделы портала">
+    <button data-tab="timeline" aria-current="page">Хронология</button>
+    <button data-tab="tree">Люди и ведомства</button>
+    <button data-tab="archive">Выпуски</button>
+    <button data-tab="method">О данных</button>
+  </nav>
+  <section id="explorer">
+    <form id="filters" class="filters" role="search" aria-label="Фильтры архива">
+      <label class="search"><span>Поиск</span><input type="search" id="query" placeholder="Фамилия, тема или номер закона" autocomplete="off"></label>
+      <label><span>Темы</span><select id="topic"></select></label>
+      <label><span>Люди</span><select id="person"></select></label>
+      <label><span>Ведомства</span><select id="agency"></select></label>
+      <label><span>Стадии</span><select id="stage"></select></label>
+      <button type="reset" class="reset">Сбросить</button>
+    </form>
+    <div id="timeline">
+      <section class="timecard" aria-labelledby="time-title">
+        <div class="section-head">
+          <div><h2 id="time-title">Хронология</h2><p id="chart-note"></p></div>
+          <div class="segments" aria-label="Основание для даты">
+            <button data-mode="publication" aria-pressed="true">Публикации</button>
+            <button data-mode="decision" aria-pressed="false">Даты решений</button>
+          </div>
+        </div>
+        <div class="chart-labels">
+          <div id="years" class="years" aria-label="Разбивка по годам"></div>
+          <button type="button" id="clear-period" hidden>Очистить месяц ×</button>
+        </div>
+        <div id="chart" class="chart" aria-label="Число сюжетов или действий по месяцам"></div>
+        <p id="time-result" class="help" aria-live="polite"></p>
+      </section>
+      <section class="analysis-block" aria-labelledby="analysis-title">
+        <div class="section-head"><div><h2 id="analysis-title">Что обсуждали чаще</h2><p id="insight-note">Число сюжетов с такой темой в выбранной области</p></div></div>
+        <div id="insights" class="insights"></div>
+      </section>
+      <details id="tracks-wrap" class="tracks-wrap">
+        <summary>Три линии из сверенных решений</summary>
+        <div id="tracks" class="tracks"></div>
+      </details>
+      <section class="records" id="records" aria-labelledby="records-title">
+        <div class="section-head records-head">
+          <div><h2 id="records-title">Сюжеты</h2><p id="result-count" aria-live="polite"></p></div>
+          <label class="sort">Порядок <select id="sort"><option value="desc">Сначала новые</option><option value="asc">Сначала ранние</option></select></label>
+        </div>
+        <div class="split">
+          <div id="record-list" class="record-list"></div>
+          <article id="record-detail" class="record-detail" tabindex="-1"></article>
+        </div>
+      </section>
+    </div>
+    <section id="tree" hidden>
+      <div class="section-head tree-head">
+        <div><h2>Люди и ведомства</h2><p>Раскройте ветку, чтобы увидеть связанные действия или сюжеты</p></div>
+        <div class="segments" aria-label="Тип ветвей">
+          <button data-tree="person" aria-pressed="true">Фамилии</button>
+          <button data-tree="agency" aria-pressed="false">Ведомства</button>
+        </div>
+      </div>
+      <div id="tree-mode" class="segments" aria-label="Тип связи с событием">
+        <button data-branch="verified" aria-pressed="true">Сверенные действия</button>
+        <button data-branch="mentions" aria-pressed="false">Упоминания</button>
+      </div>
+      <div id="tree-list" class="tree-list"></div>
+    </section>
+    <section id="archive" hidden>
+      <div class="section-head tree-head"><div><h2>Выпуски программы</h2><p id="archive-count" aria-live="polite"></p></div><label>Год публикации <select id="episode-year"></select></label></div>
+      <div id="episode-list" class="episode-list"></div>
+    </section>
+  </section>
+  <section id="method" class="method" hidden>
+    <h2>О данных</h2>
+    <p id="method-coverage"></p>
+    <dl>
+      <dt>Публикации</dt><dd>Сюжеты выделены из новостной части каждого выпуска. Дата берётся со страницы Teletype в часовом поясе Москвы. Если в тексте встречается иная дата, её можно увидеть в карточке как дату из стенограммы.</dd>
+      <dt>Даты решений</dt><dd>Сюда вошли отобранные действия, даты и роли которых сверены с карточками Госдумы и текстами актов. Несколько стадий одного закона показываются отдельно. Если итоговый акт появился после эфира, карточка приводит оба источника.</dd>
+      <dt>Фамилии и ведомства</dt><dd>В архиве они означают упоминания в заголовке или фрагментах сюжета. В сверенных карточках действия и фигуранты подписаны отдельно. Частота упоминаний отражает повестку программы и зависит от доступных выпусков и разметки.</dd>
+      <dt>Документы и стадии</dt><dd>Для обычных сюжетов номера, названия и стадии извлечены из стенограммы. Одна карточка может относиться к нескольким мерам. Сведения о стадии относятся к моменту обсуждения. Ссылки ведут в конкретные разделы стенограмм и к документам, если они указаны.</dd>
+      <dt>Саммари выпусков</dt><dd>Краткие формулировки составлены по тексту программы. В каждом выпуске есть указатели на сюжеты и формулировки из источника. Машинная разметка проверена выборочно.</dd>
+    </dl>
+    <p><a href="https://teletype.in/@eschulmann" target="_blank" rel="noopener">Каталог Екатерины Шульман на Teletype ↗</a></p>
+  </section>
+</main>
+<footer class="wrap footer"><span>Статус / Архив</span><button type="button" id="method-link">Как читать данные</button></footer>
+<dialog id="episode-dialog" aria-labelledby="episode-title"><div class="dialog-top"><strong>Саммари выпуска</strong><button type="button" id="close-dialog" aria-label="Закрыть">×</button></div><div id="episode-detail"></div></dialog>
+<noscript>Для работы хронологии включите JavaScript.</noscript>
+</body>
+</html>
